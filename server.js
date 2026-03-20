@@ -9,20 +9,21 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 
-// In-memory store (persists as long as server is running)
-// Railway keeps servers alive, so this works well for personal use
-let store = {
-  swimLog: [],
-  goals: [],
-  memory: ''
-};
+let store = { swimLog: [], goals: [], memory: '' };
 
-// ── Health check ──────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
   res.json({ status: 'ok', swims: store.swimLog.length });
 });
 
-// ── Chat ──────────────────────────────────────────────────────────────────────
+app.get('/test-key', (req, res) => {
+  const key = ANTHROPIC_API_KEY || '';
+  res.json({
+    key_set: !!key,
+    key_length: key.length,
+    key_prefix: key.slice(0, 14) + '...'
+  });
+});
+
 app.post('/chat', async (req, res) => {
   const { system, messages, max_tokens = 1000 } = req.body;
   if (!system || !messages) return res.status(400).json({ error: 'Missing system or messages' });
@@ -51,10 +52,7 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// ── Data: swim log ────────────────────────────────────────────────────────────
-app.get('/data', (req, res) => {
-  res.json(store);
-});
+app.get('/data', (req, res) => res.json(store));
 
 app.post('/data', (req, res) => {
   const { swimLog, goals, memory } = req.body;
@@ -79,6 +77,4 @@ app.post('/data/goals', (req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(PORT, () => {
-  console.log(`Dor.ai server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Dor.ai server running on port ${PORT}`));
