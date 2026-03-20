@@ -6,7 +6,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://scintillating-bonbon-6d7fbf.netlify.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:5500'
+  ]
+}));
 app.use(express.json({ limit: '2mb' }));
 
 let store = { swimLog: [], goals: [], memory: '' };
@@ -27,7 +33,6 @@ app.get('/test-key', (req, res) => {
 app.post('/chat', async (req, res) => {
   const { system, messages, max_tokens = 1000 } = req.body;
   if (!system || !messages) return res.status(400).json({ error: 'Missing system or messages' });
-
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -43,7 +48,6 @@ app.post('/chat', async (req, res) => {
         messages
       })
     });
-
     const data = await response.json();
     if (data.error) return res.status(400).json({ error: data.error });
     res.json(data);
